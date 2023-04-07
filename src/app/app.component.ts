@@ -42,6 +42,8 @@ export class AppComponent implements OnInit {
 		).bindTooltip(text);
 
   ngOnInit(): void {
+		let markersWithoutCoords: string[] = []
+
 		this.caches.forEach((cache, cacheI) => {
 			let markers: Layer[] = [];
 
@@ -51,10 +53,14 @@ export class AppComponent implements OnInit {
 				if (lat && lon) {
 					const marker = this.makeMarker(lat, lon, k, this.makeMarkerColorClass(cacheI))
 					markers.push(marker);
+				} else {
+					markersWithoutCoords.push(k)
 				}
 			})
 
 			this.layersControl.overlays[`Person ${cacheI + 1}`] = new LayerGroup(markers)
 		})
+
+		markersWithoutCoords.length > 0 && console.warn('Places without coordinates', markersWithoutCoords);
   }
 }
