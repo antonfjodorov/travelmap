@@ -25,3 +25,26 @@ Data originally from [Anton Fjodorov's TripAdvisor](https://www.tripadvisor.com/
 ## Help
 
 <https://github.com/bluehalo/ngx-leaflet/blob/master/angular.json>
+
+## Publish on gh-pages
+
+<https://medium.com/tech-insights/how-to-deploy-angular-apps-to-github-pages-gh-pages-896c4e10f9b4>
+
+Run once
+
+```sh
+git checkout -b gh-pages
+git push origin gh-pages
+npm install -g angular-cli-ghpages
+ng build --base-href https://antonfjodorov.github.io/travelmap/
+ngh --dir=dist/travelmap
+```
+
+Subsequent changes
+
+```sh
+git checkout gh-pages
+git rebase main
+ng build
+ngh --dir=dist/travelmap
+```

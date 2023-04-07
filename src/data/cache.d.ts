@@ -1,6 +1,6 @@
-import { PlaceCache } from "src/types/types";
+import { Cachefile } from "../types/types";
 
 declare module 'cache' {
-  var cache: PlaceCache;
+  var cache: Cachefile;
   export = cache;
 }

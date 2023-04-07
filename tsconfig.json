@@ -1,5 +1,7 @@
 /* To learn more about this file see: https://angular.io/config/tsconfig. */
 {
+  "schema$": "https://json.schemastore.org/tsconfig",
+  "extends": "@tsconfig/node-lts-strictest-esm/tsconfig.json",
   "compileOnSave": false,
   "compilerOptions": {
     "baseUrl": "./",
@@ -14,6 +16,7 @@
     "declaration": false,
     "downlevelIteration": true,
     "experimentalDecorators": true,
+    "exactOptionalPropertyTypes": false,
     "moduleResolution": "node",
     "importHelpers": true,
     "target": "ES2022",
@@ -25,6 +28,11 @@
       "dom"
     ],
     "resolveJsonModule": true
+  },
+  "include": ["/**/*.ts"],
+  "exclude": ["node_modules"],
+  "ts-node": {
+    "esm": true
   },
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,
