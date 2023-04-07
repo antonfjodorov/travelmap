@@ -45,6 +45,6 @@ Subsequent changes
 ```sh
 git checkout gh-pages
 git rebase main
-ng build
+npm run build
 ngh --dir=dist/travelmap
 ```
