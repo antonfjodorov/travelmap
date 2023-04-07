@@ -1,8 +1,9 @@
 import { Component, OnInit } from '@angular/core';
-import { Layer, icon, latLng, marker, tileLayer } from 'leaflet';
+import { Layer, LayerGroup, MapOptions, icon, latLng, marker, tileLayer } from 'leaflet';
 import { PlaceCache } from 'src/types/types';
 import cache1 from '../data/cache-1.json';
 import cache2 from '../data/cache-2.json';
+import { LeafletControlLayersConfig } from '@asymmetrik/ngx-leaflet';
 
 @Component({
   selector: 'app-root',
@@ -11,42 +12,49 @@ import cache2 from '../data/cache-2.json';
 })
 export class AppComponent implements OnInit {
 	caches: PlaceCache[] = [cache1, cache2]
-  markers: Layer[] = [];
-	markerColorClasses = ['marker-blue', 'marker-pink']
 
-	options = {
+	options: MapOptions = {
 		layers: [
 			tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: 'Open Street Map' })
 		],
 		zoom: 5,
 		center: latLng(59, 19)
 	};
+	
+	layersControl: LeafletControlLayersConfig = {
+		baseLayers: {},
+		overlays: {}
+	}
  
-	private addMarker(lat: number, lon: number, text: string, colorClass: string) {
-		const newMarker = marker(
+	private makeMarkerColorClass = (index: number): string => `marker-color-${index}`
+
+	private makeMarker = (lat: number, lon: number, text: string, colorClass: string) =>
+		marker(
 			[ lat, lon ],
 			{
 				icon: icon({
-					iconSize: [ 25, 41 ],
-					iconAnchor: [ 13, 41 ],
-					iconUrl: 'leaflet/marker-icon.png',
-					iconRetinaUrl: 'leaflet/marker-icon-2x.png',
-					shadowUrl: 'leaflet/marker-shadow.png',
+					iconSize: [ 20, 20 ],
+					iconAnchor: [ 0, 26 ],
+					iconUrl: 'assets/images/pin-orange.png',
 					className: colorClass
 				})
 			}
 		).bindTooltip(text);
 
-		this.markers.push(newMarker);
-	}
-
   ngOnInit(): void {
 		this.caches.forEach((cache, cacheI) => {
+			let markers: Layer[] = [];
+
 			Object.keys(cache).forEach(k => {
 				const lat = cache[k].latitude
 				const lon = cache[k].longitude
-				if (lat && lon) this.addMarker(lat, lon, k, this.markerColorClasses[cacheI])
+				if (lat && lon) {
+					const marker = this.makeMarker(lat, lon, k, this.makeMarkerColorClass(cacheI))
+					markers.push(marker);
+				}
 			})
+
+			this.layersControl.overlays[`Person ${cacheI + 1}`] = new LayerGroup(markers)
 		})
   }
 }

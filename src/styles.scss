@@ -5,6 +5,12 @@ html, body {
   padding: 0;
 }
 
-.marker-pink {
+.marker-color-1 {
+  filter: hue-rotate(60deg)
+}
+.marker-color-2 {
   filter: hue-rotate(120deg)
+}
+.marker-color-3 {
+  filter: hue-rotate(180deg)
 }
