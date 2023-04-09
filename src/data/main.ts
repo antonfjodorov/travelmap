@@ -8,62 +8,125 @@ const cacheFilename = `./src/data/cache.json`;
 const makeInFilename  = (id: string) => `./src/data/tripadvisor-${id}.txt`;
 const makeOutFilename = (id: string) => `./src/data/tripadvisor-${id}.json`;
 
-const runThroughPlacenames = async (placeNames: string[]): Promise<{ geocodedPlaces: Cachefile, notfoundPlaces: string[] }> => {
-  let geocodedPlaces: Cachefile = {};
-  let notfoundPlaces: string[] = [];
+/**
+ * @example valid input:
+ *    Kathmandu
+ *    want:Kathmandu
+ *    fav:My best friend's place|@55.0774047,19.9287343
+ *    fav:My best friend's place|755 Mountain Blvd, Watchung, NJ, USA
+ * @returns (lat, lon) and addressLine are mutually exclusive
+ */
+const parseTextRow = (textRow: string): Place | undefined => {
+  let latitude   : number | undefined
+  let longitude  : number | undefined
+  let addressLine: string | undefined
+  let displayName: string
+  let type       : PlaceType = 'been'
   
-  for (let i = 0; i < placeNames.length; i++) {
-    let placeName = placeNames[i];
+  for (const t of ['fav', 'want']) {
+    if (textRow.startsWith(t)) {
+      textRow = textRow.split(`${t}:`)[1] as string
+      type = t
+      break
+    }
+  }
 
-    if (typeof placeName === 'undefined') {
+  if (textRow.includes('|')) {
+    const parts = textRow.split('|')
+    displayName = parts[0] as string
+
+    if (parts[1] && parts[1].includes('@')) {
+      // Use coords, no address line
+      const coords = parts[1].split(',')
+      latitude = parseFloat(coords[0]?.slice(1) as string)
+      longitude = parseFloat(coords[1] as string)
+
+      if (isNaN(latitude) || isNaN(longitude)) {
+        console.error(`Error parsing coordinates for row ${textRow}`)
+        return undefined
+      }
+    } else {
+      // Use address line, no coords
+      addressLine = parts[1] as string
+    }
+  } else {
+    displayName = addressLine = textRow
+  }
+
+  return {
+    addressLine,
+    displayName,
+    latitude,
+    longitude,
+    type
+  }
+}
+
+const runThroughTextrows = async (textRows: string[]): Promise<{ geocodedPlaces: Cachefile, notfoundPlaces: Place[] }> => {
+  let geocodedPlaces: Cachefile = {};
+  let notfoundPlaces: Place[] = [];
+  
+  for (let i = 0; i < textRows.length; i++) {
+    if (typeof textRows[i] === 'undefined') {
       console.warn(`Place index ${i} is undefined`);
       continue
     }
-
-    let placeType: PlaceType = 'been'
-    if (placeName.startsWith('fav:')) {
-      placeName = placeName.split('fav:')[1] as string
-      placeType = 'fav'
-    } else if (placeName.startsWith('want:')) {
-      placeName = placeName.split('want:')[1] as string
-      placeType = 'want'
+    
+    let foundPlace = parseTextRow(textRows[i] as string)
+    if (!foundPlace) {
+      notfoundPlaces.push({ displayName: textRows[i] as string })
+      continue
     }
-    let foundPlace: Place = { type: placeType }
 
-    if (cache[placeName]) {
-      foundPlace.latitude  = cache[placeName]?.latitude
-      foundPlace.longitude = cache[placeName]?.longitude
-      console.log(`[cache] ${placeName}: ${JSON.stringify(cache[placeName])}`);
+    if (foundPlace.latitude && foundPlace.longitude) {
+      geocodedPlaces[foundPlace.displayName] = foundPlace
+      continue
+    }
+
+    const addressLine = foundPlace.addressLine as string // This is set because coords were not set
+    const cacheItem = getCacheItem(addressLine)
+    if (cacheItem) {
+      foundPlace.latitude  = cacheItem?.latitude
+      foundPlace.longitude = cacheItem?.longitude
+      console.log(`[cache] ${foundPlace.displayName}: ${JSON.stringify(cacheItem)}`);
     } else {
-      const res = await geocoder.geocode(placeName as string);
+      let res
+      try {
+        res = await geocoder.geocode(addressLine);
+      } catch (error) {
+        console.error(`[error] geocode for ${addressLine}`, error)
+        continue
+      }
 
       if (res[0]) {
-        setCacheItem(placeName, res[0])
+        setCacheItem(addressLine, res[0])
         foundPlace.latitude  = res[0].latitude
         foundPlace.longitude = res[0].longitude
         
-        console.log(`[geocode] ${placeName}: ${JSON.stringify(foundPlace)}`);
+        console.log(`[geocode] ${foundPlace.displayName}: ${JSON.stringify(foundPlace)}`);
       } else {
-        console.warn(`${placeName}: no data`);
-        notfoundPlaces.push(placeName);
+        console.warn(`${addressLine}: not found`);
+        notfoundPlaces.push(foundPlace);
         continue;
       }
     }
 
-    geocodedPlaces[placeName] = foundPlace
+    geocodedPlaces[foundPlace.displayName] = foundPlace
   }
 
   return { geocodedPlaces, notfoundPlaces }
 }
 
+const getCacheItem = (cacheKey: string): Coords | undefined =>
+  cache[cacheKey]
 const setCacheItem = (cacheKey: string, coords: Coords) =>
-  cache[cacheKey] = { latitude: coords.latitude, longitude: coords.longitude };
+  cache[cacheKey] = { latitude: coords.latitude, longitude: coords.longitude }
 
 const runWithId = async (fileId: string): Promise<void> => {
   const inFilename = makeInFilename(fileId)
-  const placeNames = fs.readFileSync(inFilename, 'utf8').split('\r\n')
+  const textRows = fs.readFileSync(inFilename, 'utf8').split('\r\n')
 
-  const { geocodedPlaces, notfoundPlaces } = await runThroughPlacenames(placeNames)
+  const { geocodedPlaces, notfoundPlaces } = await runThroughTextrows(textRows)
   
   const outFilename = makeOutFilename(fileId)
   fs.writeFileSync(outFilename, JSON.stringify(geocodedPlaces), 'utf-8')
@@ -95,4 +158,4 @@ process.once('SIGINT', function(_code) {
 });
 
 const cache = readOrCreateCacheFile();
-fileIds.forEach(id => runWithId(id))
+fileIds.forEach(runWithId)

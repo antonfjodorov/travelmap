@@ -1,14 +1,20 @@
 export type PlaceType = 'been' | 'fav' | 'want' | string
 
-export type Coords = {
+export interface Coords {
   latitude ?: number
   longitude?: number
 }
 
-export type Place = Coords & {
-  type?: PlaceType
+export interface Place extends Coords {
+  displayName : string
+  addressLine?: string
+  type?       : PlaceType
 }
 
-export type Cachefile = {
-  [placeName: string]: Place
+export interface Cachefile {
+  [addressLine: string]: Coords
+}
+
+export interface Outfile {
+  [displayName: string]: Place
 }

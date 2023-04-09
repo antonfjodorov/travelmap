@@ -1,10 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { Layer, LayerGroup, MapOptions, PointExpression, icon, latLng, marker, tileLayer } from 'leaflet';
-import cache1 from '../data/tripadvisor-1.json';
-import cache2 from '../data/tripadvisor-2.json';
+import json1 from '../data/tripadvisor-1.json';
+import json2 from '../data/tripadvisor-2.json';
 import type { LeafletControlLayersConfig } from '@asymmetrik/ngx-leaflet';
 
-import type { Cachefile, PlaceType } from '../types/types'
+import type { Outfile, PlaceType } from '../types/types'
 
 @Component({
   selector: 'app-root',
@@ -12,7 +12,7 @@ import type { Cachefile, PlaceType } from '../types/types'
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent implements OnInit {
-	caches: Cachefile[] = [cache1, cache2]
+	outfiles: Outfile[] = [json1, json2]
 
 	options: MapOptions = {
 		layers: [
@@ -58,15 +58,15 @@ export class AppComponent implements OnInit {
   ngOnInit(): void {
 		let markersWithoutCoords: string[] = []
 
-		this.caches.forEach((cache, cacheI) => {
-			console.log('cache', cacheI, cache);
+		this.outfiles.forEach((jsonFile, fileI) => {
+			console.log('outfile', fileI, jsonFile);
 			
 			let markers: Layer[] = [];
 
-			Object.keys(cache).forEach(k => {
-				const lat = cache[k]?.latitude
-				const lon = cache[k]?.longitude
-				const type = cache[k]?.type || 'been'
+			Object.keys(jsonFile).forEach(k => {
+				const lat  = jsonFile[k]?.latitude
+				const lon  = jsonFile[k]?.longitude
+				const type = jsonFile[k]?.type || 'been'
 
 				if (lat && lon) {
 					const marker = this.makeMarker(lat, lon, k, this.makeMarkerColorClass(0), type)
@@ -76,7 +76,7 @@ export class AppComponent implements OnInit {
 				}
 			})
 
-			this.layersControl.overlays[`Person ${cacheI + 1}`] = new LayerGroup(markers)
+			this.layersControl.overlays[`Person ${fileI + 1}`] = new LayerGroup(markers)
 		})
 
 		markersWithoutCoords.length > 0 && console.warn('Places without coordinates', markersWithoutCoords);

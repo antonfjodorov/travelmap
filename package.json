@@ -1,9 +1,10 @@
 {
   "name": "travelmap",
-  "version": "2.0.1",
+  "version": "2.1.0",
   "type": "module",
   "scripts": {
     "geocode": "ts-node src/data/main.ts",
+    "w:geocode": "nodemon",
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
@@ -44,6 +45,7 @@
     "karma-chrome-launcher": "~3.1.0",
     "karma-coverage": "~2.2.0",
     "karma-jasmine": "~5.1.0",
-    "karma-jasmine-html-reporter": "~2.0.0"
+    "karma-jasmine-html-reporter": "~2.0.0",
+    "nodemon": "^2.0.22"
   }
 }
