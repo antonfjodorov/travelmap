@@ -64,6 +64,5 @@ Subsequent changes
 ```sh
 git checkout gh-pages
 git rebase main
-npm run build
-ngh --dir=dist/travelmap
+npm run publish
 ```

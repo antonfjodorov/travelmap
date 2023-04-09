@@ -1,6 +1,6 @@
 {
   "name": "travelmap",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "type": "module",
   "scripts": {
     "geocode": "ts-node src/data/main.ts",
@@ -10,7 +10,8 @@
     "build": "ng build",
     "postbuild": "node post_production.js",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "publish": "npm run build && ngh --dir=dist/travelmap"
   },
   "private": true,
   "dependencies": {
