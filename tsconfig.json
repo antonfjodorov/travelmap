@@ -27,7 +27,8 @@
       "ES2022",
       "dom"
     ],
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "ignoreDeprecations": "5.0"
   },
   "include": ["/**/*.ts"],
   "exclude": ["node_modules"],
