@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
-import { Layer, LayerGroup, MapOptions, PointExpression, icon, latLng, marker, tileLayer } from 'leaflet';
-import json1 from '../data/tripadvisor-1.json';
-import json2 from '../data/tripadvisor-2.json';
+import { Layer, LayerGroup, Map, MapOptions, PointExpression, icon, latLng, marker, tileLayer } from 'leaflet';
+import file from '../data/tripadvisor-20240218.json';
 import type { LeafletControlLayersConfig } from '@asymmetrik/ngx-leaflet';
 
 import type { Outfile, PlaceType } from '../types/types'
@@ -12,8 +11,8 @@ import type { Outfile, PlaceType } from '../types/types'
   styleUrls: ['./app.component.scss']
 })
 export class AppComponent implements OnInit {
-	outfiles: Outfile[] = [json1, json2]
-
+	outfiles: Outfile[] = [file]; //Can import and display multiple files
+	
 	options: MapOptions = {
 		layers: [
 			tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: 'Open Street Map' })
@@ -55,7 +54,14 @@ export class AppComponent implements OnInit {
 		).bindTooltip(text);
 	}
 
-  ngOnInit(): void {
+	// If layers are not added to map, they will have to be clicked in the layers control corner to be visible
+	onMapReady(map: Map) {
+		for (const layer of Object.values(this.layersControl.overlays)) {
+			map.addLayer(layer)
+		}
+	}
+
+	ngOnInit(): void {
 		let markersWithoutCoords: string[] = []
 
 		this.outfiles.forEach((jsonFile, fileI) => {
@@ -80,5 +86,5 @@ export class AppComponent implements OnInit {
 		})
 
 		markersWithoutCoords.length > 0 && console.warn('Places without coordinates', markersWithoutCoords);
-  }
+	}
 }

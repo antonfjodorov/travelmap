@@ -3,7 +3,7 @@ import fs from 'fs';
 import geocoder from './geocode.js';
 import type { Cachefile, Coords, Place, PlaceType } from '../types/types.js';
 
-const fileIds = ['1', '2'];
+const fileIds = ['20240218'];
 const cacheFilename = `./src/data/cache.json`;
 const makeInFilename  = (id: string) => `./src/data/tripadvisor-${id}.txt`;
 const makeOutFilename = (id: string) => `./src/data/tripadvisor-${id}.json`;
