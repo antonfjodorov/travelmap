@@ -1,9 +1,11 @@
 import { Component, OnInit } from '@angular/core';
-import { Layer, LayerGroup, Map, MapOptions, PointExpression, icon, latLng, marker, tileLayer } from 'leaflet';
+import * as L from 'leaflet';
 import file from '../data/tripadvisor-20240218.json';
 import type { LeafletControlLayersConfig } from '@asymmetrik/ngx-leaflet';
 
 import type { Outfile, PlaceType } from '../types/types'
+// import 'node_modules/leaflet.markercluster/dist/MarkerCluster.Default.css'
+// import 'node_modules/leaflet.markercluster/dist/MarkerCluster.css'
 
 @Component({
   selector: 'app-root',
@@ -12,42 +14,59 @@ import type { Outfile, PlaceType } from '../types/types'
 })
 export class AppComponent implements OnInit {
 	outfiles: Outfile[] = [file]; //Can import and display multiple files
-	
-	options: MapOptions = {
-		layers: [
-			tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: 'Open Street Map' })
-		],
-		zoom: 5,
-		center: latLng(59, 19)
-	};
-	
+
+	markerClusterGroup: L.MarkerClusterGroup
+	markerClusterData = []
+
 	layersControl: LeafletControlLayersConfig = {
 		baseLayers: {},
 		overlays: {}
 	}
+
+	options: L.MapOptions = {
+		layers: [
+			L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 18, attribution: 'Open Street Map' })
+		],
+		zoom: 5,
+		center: L.latLng(59, 19)
+	};
+	
+	constructor() {
+		this.markerClusterGroup = L.markerClusterGroup({
+			removeOutsideVisibleBounds: true,
+			// iconCreateFunction: function(cluster) {
+			// 	return L.divIcon({ html: '<span class="marker-cluster-small">' + cluster.getChildCount() + '</span>' });
+			// }
+		})
+	}
  
 	private makeMarkerColorClass = (index: number): string => `marker-color-${index}`
 
-	private makeMarker = (lat: number, lon: number, text: string, colorClass: string, type: PlaceType) => {
+	readonly getIconOptions = (type: PlaceType) => {
 		let iconFilename = 'pin-orange.png'
-		let iconSize: PointExpression   = [13, 13]
-		let iconAnchor: PointExpression = [ 0, 13]
+		let iconSize: L.PointExpression   = [13, 13]
+		let iconAnchor: L.PointExpression = [ 0, 13]
 		if (type === 'fav') {
 			iconFilename = 'pin-heart.png'
 			iconSize   = [19, 20]
 			iconAnchor = [ 0, 20]
-		}
-		else if (type === 'want') {
+		} else if (type === 'want') {
 			iconFilename = 'pin-green.png'
 		}
 
-		return marker(
+		return {
+			iconSize,
+			iconAnchor,
+			iconUrl: `assets/images/${iconFilename}`
+		}
+	}
+	private makeMarker = (lat: number, lon: number, text: string, colorClass: string, type: PlaceType) => {
+		const iconOptions = this.getIconOptions(type)
+		return L.marker(
 			[ lat, lon ],
 			{
-				icon: icon({
-					iconSize,
-					iconAnchor,
-					iconUrl: `assets/images/${iconFilename}`,
+				icon: L.icon({
+					...iconOptions,
 					className: colorClass
 				})
 			}
@@ -55,19 +74,24 @@ export class AppComponent implements OnInit {
 	}
 
 	// If layers are not added to map, they will have to be clicked in the layers control corner to be visible
-	onMapReady(map: Map) {
+	onMapReady(map: L.Map) {
 		for (const layer of Object.values(this.layersControl.overlays)) {
+			// Don't use clustering:
 			map.addLayer(layer)
+			
+			// Use clustering:
+			// this.markerClusterGroup.addLayer(layer);
 		}
+		this.markerClusterGroup.addTo(map);
 	}
-
+	
 	ngOnInit(): void {
 		let markersWithoutCoords: string[] = []
 
 		this.outfiles.forEach((jsonFile, fileI) => {
 			console.log('outfile', fileI, jsonFile);
 			
-			let markers: Layer[] = [];
+			let markers: L.Layer[] = [];
 
 			Object.keys(jsonFile).forEach(k => {
 				const lat  = jsonFile[k]?.latitude
@@ -82,7 +106,7 @@ export class AppComponent implements OnInit {
 				}
 			})
 
-			this.layersControl.overlays[`Person ${fileI + 1}`] = new LayerGroup(markers)
+			this.layersControl.overlays[`Person ${fileI + 1}`] = new L.LayerGroup(markers)
 		})
 
 		markersWithoutCoords.length > 0 && console.warn('Places without coordinates', markersWithoutCoords);

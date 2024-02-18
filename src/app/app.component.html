@@ -2,5 +2,6 @@
 <div leaflet class="map"
   [leafletOptions]="options"
   [leafletLayersControl]="layersControl"
+  [leafletMarkerCluster]="markerClusterData"
   (leafletMapReady)="onMapReady($event)"
 ></div>
